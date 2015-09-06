@@ -1,7 +1,10 @@
 [package]
-name = "irontest"
+name = "iron-toy"
 version = "0.1.0"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
+description = "Trying out webapp development in rust with iron"
+repository = "https://github.com/kaj/iron-toy"
+licence = "MIT"
 
 [dependencies]
 iron = "*"
