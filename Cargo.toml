@@ -6,3 +6,4 @@ authors = ["Rasmus Kaj <kaj@kth.se>"]
 [dependencies]
 iron = "*"
 router = "*"
+liquid = "*"
