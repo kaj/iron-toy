@@ -13,17 +13,22 @@ use liquid::LiquidOptions;
 use liquid::Renderable;
 use liquid::Context;
 use liquid::Value;
+use liquid::Template;
 use liquid::parse;
+
+fn load_template(name: &str) -> Result<Template, String> {
+    let filename = format!("./templates/{}.html", name);
+    let mut text = String::new();
+    let _x = File::open(filename).unwrap().read_to_string(&mut text);
+    let mut options : LiquidOptions = Default::default();
+    parse(&text, &mut options)
+}
 
 macro_rules! render {
     ($template:expr, $($name:ident=$arg:expr),*) => {{
         //println!("Should render {:?} {:?}", $template, vec!($(stringify!($name)),*));
         let html = "text/html".parse::<Mime>().unwrap();
-        let mut text = String::new();
-        let filename = format!("./templates/{}.html", $template);
-        let _x = File::open(filename).unwrap().read_to_string(&mut text);
-        let mut options : LiquidOptions = Default::default();
-        let template = match parse(&text, &mut options) {
+        let template = match load_template($template) {
             Ok(result) => result,
             Err(e) => panic!("Failed to parse template {:?}: {}", $template, e)
         };
@@ -31,12 +36,9 @@ macro_rules! render {
         let mut data = Context::new();
         $(
             data.set_val(stringify!($name), $arg);
-            //println!("Set {:?} to {:?}", stringify!($name), data.get_val(stringify!($name)));
-
            )*
-        //println!("Render {:?}", $template);
         match template.render(&mut data) {
-            Some(text) => Ok(Response::with((status::Ok, html, text))),
+            Some(text) => Ok(Response::with((status::Ok, html, text.to_string()))),
             None => panic!("Failed to render template {}", $template)
         }
     }};
@@ -59,12 +61,14 @@ fn main() {
         };
         render!("hello", who=Value::Str(x), what=Value::Str(y))
     }
-    Iron::new(router!(
+    let app = Iron::new(router!(
         get "/" => hello_world,
         get "/foo/:who" => hello_world,
         get "/bar/" => other,
         get "/bar/:x" => other,
         get "/bar/:x/:y" => other
-        )).http("localhost:3000").unwrap();
-    println!("On 3000");
+    ));
+    let addr = "localhost:3000";
+    println!("Running on http://{}", addr);
+    app.http("localhost:3000").unwrap();
 }
