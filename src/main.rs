@@ -3,13 +3,16 @@ extern crate iron;
 extern crate router;
 extern crate handlebars_iron as hbs;
 extern crate rustc_serialize;
+extern crate logger;
 
 use std::collections::BTreeMap;
+use std::thread::sleep_ms;
 use iron::prelude::*;
 use iron::status;
 use router::Router;
 use hbs::{Template, HandlebarsEngine};
 use rustc_serialize::json::ToJson;
+use logger::Logger;
 
 macro_rules! render {
     ($template:expr, $($name:ident=$arg:expr),*) => {{
@@ -35,6 +38,7 @@ fn main() {
               args.find("y").unwrap_or("walk").to_string(),
               )
         };
+        sleep_ms(2000);
         render!("hello", who=x, what=y)
     }
 
@@ -46,6 +50,7 @@ fn main() {
         get "/bar/:x/:y" => other
             ));
     chain.link_after(HandlebarsEngine::new("./templates/", ".hbs"));
+    chain.link(Logger::new(None)); // last => includes template rendering time
     let app = Iron::new(chain);
     let addr = "localhost:3000";
     println!("Running on http://{}", addr);
